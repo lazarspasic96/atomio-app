@@ -1,0 +1,20 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(bun add:*)",
+      "Bash(cat:*)",
+      "Bash(bun run build:*)",
+      "Bash(bun run:*)",
+      "Bash(nc:*)",
+      "Bash(PGPASSWORD=\"LlGbcemQgefmuDkm\" psql:*)",
+      "Bash(npx prisma generate:*)",
+      "Bash(npx prisma db push:*)",
+      "Bash(npx shadcn@latest init:*)",
+      "Bash(npx shadcn@latest add:*)",
+      "Bash(tree:*)",
+      "Bash(xargs:*)",
+      "Bash(timeout 15 bun run dev:*)",
+      "Bash(ls:*)"
+    ]
+  }
+}

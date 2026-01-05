@@ -1,0 +1,170 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider  = "postgresql"
+    url       = env("DATABASE_URL")
+    directUrl = env("DIRECT_URL")
+}
+
+// ============================================
+// ENUMS
+// ============================================
+
+enum HabitCategory {
+    HEALTH
+    FITNESS
+    LEARNING
+    PRODUCTIVITY
+    MINDFULNESS
+    SOCIAL
+    CREATIVE
+    FINANCIAL
+    OTHER
+}
+
+// ============================================
+// USER MODEL
+// ============================================
+
+model User {
+    id        String     @id // This will be the Supabase Auth user ID
+    email     String     @unique
+    createdAt DateTime   @default(now())
+    updatedAt DateTime   @updatedAt
+    habits    Habit[]
+    stats     UserStats?
+}
+
+// ============================================
+// HABIT MODEL
+// ============================================
+
+model Habit {
+    id               String            @id @default(cuid())
+    name             String
+    frequencyPerWeek Int               // 1-7 times per week
+    activeDays       Int[]             // Array of day numbers (0=Sunday, 1=Monday, etc.)
+    userId           String
+    user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+    completions      HabitCompletion[]
+    createdAt        DateTime          @default(now())
+    updatedAt        DateTime          @updatedAt
+
+    // Atomic Habits fields (Phase 1)
+    category HabitCategory?
+    emoji    String?
+
+    // Streak tracking (denormalized for performance)
+    streakData HabitStreak?
+
+    @@index([userId])
+    @@index([category])
+}
+
+// ============================================
+// HABIT COMPLETION MODEL
+// ============================================
+
+model HabitCompletion {
+    id        String   @id @default(cuid())
+    habitId   String
+    habit     Habit    @relation(fields: [habitId], references: [id], onDelete: Cascade)
+    date      DateTime @db.Date // The specific date the habit was completed
+    completed Boolean  @default(true)
+    createdAt DateTime @default(now())
+
+    @@unique([habitId, date])
+    @@index([habitId])
+    @@index([date])
+}
+
+// ============================================
+// STREAK TRACKING (Phase 1)
+// ============================================
+
+model HabitStreak {
+    id       String @id @default(cuid())
+    habitId  String @unique
+    habit    Habit  @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+    currentStreak    Int @default(0)
+    longestStreak    Int @default(0)
+    totalCompletions Int @default(0)
+
+    lastCompletedAt DateTime?
+    streakStartedAt DateTime?
+
+    // Two-day rule tracking
+    lastMissedAt      DateTime?
+    consecutiveMisses Int       @default(0)
+
+    // Performance optimization
+    lastCalculatedAt DateTime @default(now())
+
+    updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// USER STATISTICS (Phase 1)
+// ============================================
+
+model UserStats {
+    id     String @id @default(cuid())
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    // Aggregate stats
+    totalHabitsCreated Int @default(0)
+    totalCompletions   Int @default(0)
+
+    // Overall streaks (any habit completed)
+    currentOverallStreak Int @default(0)
+    longestOverallStreak Int @default(0)
+
+    // Gamification (Phase 5 - placeholders)
+    experiencePoints Int @default(0)
+    level            Int @default(1)
+
+    // Identity tracking
+    identityVotes Int @default(0) // = totalCompletions
+
+    // Timestamps
+    lastActiveAt DateTime?
+    createdAt    DateTime  @default(now())
+    updatedAt    DateTime  @updatedAt
+
+    // Relations (for future phases)
+    weeklyStats WeeklyStat[]
+}
+
+// ============================================
+// WEEKLY STATISTICS (Phase 2 - placeholder)
+// ============================================
+
+model WeeklyStat {
+    id          String    @id @default(cuid())
+    userStatsId String
+    userStats   UserStats @relation(fields: [userStatsId], references: [id], onDelete: Cascade)
+
+    weekStartDate DateTime @db.Date
+    weekEndDate   DateTime @db.Date
+
+    // Metrics
+    completionRate  Float // 0.0 - 1.0
+    habitsCompleted Int
+    habitsPossible  Int
+
+    // Comparison
+    improvementRate Float? // % change from previous week
+
+    createdAt DateTime @default(now())
+
+    @@unique([userStatsId, weekStartDate])
+    @@index([weekStartDate])
+}

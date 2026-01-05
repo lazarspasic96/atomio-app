@@ -1,0 +1,9 @@
+export { LandingHeader } from "./landing-header";
+export { HeroSection } from "./hero-section";
+export { TrustBar } from "./trust-bar";
+export { FeaturesSection } from "./features-section";
+export { HowItWorksSection } from "./how-it-works-section";
+export { PhilosophySection } from "./philosophy-section";
+export { WhyFreeSection } from "./why-free-section";
+export { FinalCTASection } from "./final-cta-section";
+export { LandingFooter } from "./landing-footer";
