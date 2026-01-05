@@ -42,7 +42,10 @@ export const completionRouter = createTRPCRouter({
           input.date.getUTCFullYear(),
           input.date.getUTCMonth(),
           input.date.getUTCDate(),
-          0, 0, 0, 0
+          0,
+          0,
+          0,
+          0,
         ),
       );
 
@@ -106,12 +109,18 @@ export const completionRouter = createTRPCRouter({
       });
 
       const previousStreak = habit.streakData?.currentStreak ?? 0;
-      const currentStreak = calculateCurrentStreak(completions, habit.activeDays);
+      const currentStreak = calculateCurrentStreak(
+        completions,
+        habit.activeDays,
+      );
       const longestStreak = Math.max(
         calculateLongestStreak(completions, habit.activeDays, habit.createdAt),
-        habit.streakData?.longestStreak ?? 0
+        habit.streakData?.longestStreak ?? 0,
       );
-      const streakStartDate = findStreakStartDate(completions, habit.activeDays);
+      const streakStartDate = findStreakStartDate(
+        completions,
+        habit.activeDays,
+      );
       const lastCompletion = completions[0];
 
       await ctx.db.habitStreak.upsert({
@@ -123,7 +132,9 @@ export const completionRouter = createTRPCRouter({
           totalCompletions: completions.length,
           lastCompletedAt: lastCompletion?.date,
           streakStartedAt: streakStartDate,
-          consecutiveMisses: completed ? 0 : (habit.streakData?.consecutiveMisses ?? 0),
+          consecutiveMisses: completed
+            ? 0
+            : (habit.streakData?.consecutiveMisses ?? 0),
           lastCalculatedAt: new Date(),
         },
         update: {
@@ -132,7 +143,9 @@ export const completionRouter = createTRPCRouter({
           totalCompletions: completions.length,
           lastCompletedAt: lastCompletion?.date,
           streakStartedAt: streakStartDate,
-          consecutiveMisses: completed ? 0 : (habit.streakData?.consecutiveMisses ?? 0),
+          consecutiveMisses: completed
+            ? 0
+            : (habit.streakData?.consecutiveMisses ?? 0),
           lastCalculatedAt: new Date(),
         },
       });
@@ -157,13 +170,91 @@ export const completionRouter = createTRPCRouter({
       });
 
       // Check for new milestone
-      const milestone = completed ? isNewMilestone(currentStreak, previousStreak) : null;
+      const milestone = completed
+        ? isNewMilestone(currentStreak, previousStreak)
+        : null;
+
+      // Check and award achievements (only on completion, not uncomplete)
+      let newAchievements: Array<{
+        id: string;
+        key: string;
+        name: string;
+        emoji: string;
+        xpReward: number;
+      }> = [];
+
+      if (completed) {
+        // Get user's total completions count
+        const userStats = await ctx.db.userStats.findUnique({
+          where: { userId: ctx.dbUser.id },
+        });
+        const totalCompletions = userStats?.totalCompletions ?? 0;
+
+        // Get habit count for special achievements
+        const habitCount = await ctx.db.habit.count({
+          where: { userId: ctx.dbUser.id },
+        });
+
+        // Find achievements the user hasn't earned yet that they now qualify for
+        const eligibleAchievements = await ctx.db.achievement.findMany({
+          where: {
+            OR: [
+              // Streak achievements
+              { category: "STREAK", threshold: { lte: currentStreak } },
+              // Completion count achievements
+              { category: "COMPLETIONS", threshold: { lte: totalCompletions } },
+              // Special achievements
+              { key: "first_completion", threshold: { lte: totalCompletions } },
+              { key: "first_habit", threshold: { lte: habitCount } },
+              { key: "habits_3", threshold: { lte: habitCount } },
+              { key: "habits_5", threshold: { lte: habitCount } },
+            ],
+            NOT: {
+              userAchievements: {
+                some: { userId: ctx.dbUser.id },
+              },
+            },
+          },
+        });
+
+        // Award new achievements
+        if (eligibleAchievements.length > 0) {
+          await ctx.db.userAchievement.createMany({
+            data: eligibleAchievements.map((a) => ({
+              userId: ctx.dbUser.id,
+              achievementId: a.id,
+            })),
+            skipDuplicates: true,
+          });
+
+          // Add XP from achievements to user stats
+          const totalXp = eligibleAchievements.reduce(
+            (sum, a) => sum + a.xpReward,
+            0,
+          );
+          await ctx.db.userStats.update({
+            where: { userId: ctx.dbUser.id },
+            data: {
+              experiencePoints: { increment: totalXp },
+            },
+          });
+
+          newAchievements = eligibleAchievements.map((a) => ({
+            id: a.id,
+            key: a.key,
+            name: a.name,
+            emoji: a.emoji,
+            xpReward: a.xpReward,
+          }));
+        }
+      }
 
       return {
         completed,
         currentStreak,
         longestStreak,
         milestone,
+        newAchievements,
       };
     }),
 
@@ -182,7 +273,10 @@ export const completionRouter = createTRPCRouter({
           input.startDate.getUTCFullYear(),
           input.startDate.getUTCMonth(),
           input.startDate.getUTCDate(),
-          0, 0, 0, 0
+          0,
+          0,
+          0,
+          0,
         ),
       );
       const normalizedEndDate = new Date(
@@ -190,7 +284,10 @@ export const completionRouter = createTRPCRouter({
           input.endDate.getUTCFullYear(),
           input.endDate.getUTCMonth(),
           input.endDate.getUTCDate(),
-          23, 59, 59, 999
+          23,
+          59,
+          59,
+          999,
         ),
       );
 

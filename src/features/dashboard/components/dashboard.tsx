@@ -2,13 +2,13 @@
 
 import { useStats, useStreaks, useAnalytics } from "~/features/habits/hooks";
 import { CreateHabitDialog } from "~/features/habits/components";
+import { AchievementsSummaryCard } from "~/features/achievements";
 import { DailyScoreCard } from "./daily-score-card";
 import { StreakSummaryCard } from "./streak-summary-card";
 import { IdentityVotesCard } from "./identity-votes-card";
 import { WeeklyTrendsCard } from "./weekly-trends-card";
 import { BestDayCard } from "./best-day-card";
-import { Card, CardContent, CardHeader, CardTitle } from "~/components/ui/card";
-import { Trophy } from "lucide-react";
+import { Card, CardContent } from "~/components/ui/card";
 
 export function Dashboard() {
   const { dashboard, isLoadingDashboard, identityVotes, isLoadingIdentityVotes } = useStats();
@@ -44,12 +44,8 @@ export function Dashboard() {
           isLoading={isLoadingStreaks}
         />
 
-        {/* Level Card */}
-        <LevelCard
-          level={dashboard?.level ?? 1}
-          xp={dashboard?.experiencePoints ?? 0}
-          isLoading={isLoadingDashboard}
-        />
+        {/* Achievements Summary */}
+        <AchievementsSummaryCard />
       </div>
 
       {/* Analytics Section */}
@@ -96,59 +92,6 @@ export function Dashboard() {
         />
       </div>
     </div>
-  );
-}
-
-function LevelCard({
-  level,
-  xp,
-  isLoading,
-}: {
-  level: number;
-  xp: number;
-  isLoading?: boolean;
-}) {
-  if (isLoading) {
-    return (
-      <Card>
-        <CardHeader className="pb-2">
-          <div className="h-4 w-20 animate-pulse rounded bg-muted" />
-        </CardHeader>
-        <CardContent>
-          <div className="h-8 w-12 animate-pulse rounded bg-muted" />
-          <div className="mt-2 h-3 w-24 animate-pulse rounded bg-muted" />
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // XP needed for next level (simple formula)
-  const xpForNextLevel = Math.pow(level, 2) * 50;
-  const progress = Math.min((xp / xpForNextLevel) * 100, 100);
-
-  return (
-    <Card>
-      <CardHeader className="pb-2">
-        <CardTitle className="flex items-center gap-2 text-sm font-medium">
-          <Trophy className="h-4 w-4 text-yellow-500" />
-          Level
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        <p className="text-2xl font-bold">{level}</p>
-        <div className="mt-2">
-          <div className="h-1.5 w-full rounded-full bg-muted">
-            <div
-              className="h-1.5 rounded-full bg-yellow-500 transition-all"
-              style={{ width: `${progress}%` }}
-            />
-          </div>
-          <p className="mt-1 text-xs text-muted-foreground">
-            {xp} / {xpForNextLevel} XP
-          </p>
-        </div>
-      </CardContent>
-    </Card>
   );
 }
 

@@ -3,6 +3,7 @@ import { completionRouter } from "~/server/api/routers/completion";
 import { streakRouter } from "~/server/api/routers/streak";
 import { statsRouter } from "~/server/api/routers/stats";
 import { analyticsRouter } from "~/server/api/routers/analytics";
+import { achievementRouter } from "~/server/api/routers/achievement";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -16,6 +17,7 @@ export const appRouter = createTRPCRouter({
   streak: streakRouter,
   stats: statsRouter,
   analytics: analyticsRouter,
+  achievement: achievementRouter,
 });
 
 // export type definition of API

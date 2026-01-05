@@ -18,16 +18,19 @@ import {
 } from "~/components/ui/tooltip";
 import { useCompletions } from "../hooks/use-completions";
 import { useHabits } from "../hooks/use-habits";
+import { useStreaks } from "../hooks/use-streaks";
 import {
   formatDateLong,
   getWeekStart,
   getWeekEnd,
   getWeekDates,
+  cn,
 } from "~/lib/utils";
-import { isToday, isActiveDay } from "../utils/date-utils";
+import { isToday, isActiveDay, isPastDate } from "../utils/date-utils";
 import { CreateHabitDialog } from "./create-habit-dialog";
 import { HabitActionsMenu } from "./habit-actions-menu";
 import { HabitTableSkeleton } from "./habit-table-skeleton";
+import { HabitStreakBadge } from "./habit-streak-badge";
 
 export function HabitTable() {
   // Always show current week (Monday to Sunday)
@@ -52,6 +55,25 @@ export function HabitTable() {
   });
 
   const { remove, isDeleting } = useHabits();
+  const { getStreakByHabitId, atRiskHabits } = useStreaks();
+
+  // Calculate daily summary (completed/active habits per day)
+  const dailySummary = useMemo(() => {
+    if (!habits) return [];
+    return weekDates.map((date) => {
+      let completed = 0;
+      let active = 0;
+      habits.forEach((habit) => {
+        if (isActiveDay(habit.activeDays, date)) {
+          active++;
+          if (isCompleted(habit.id, date)) {
+            completed++;
+          }
+        }
+      });
+      return { date, completed, active };
+    });
+  }, [habits, weekDates, isCompleted]);
 
   if (isLoading) {
     return <HabitTableSkeleton />;
@@ -98,11 +120,17 @@ export function HabitTable() {
                       </div>
                     </TableHead>
                   ))}
+                  <TableHead className="w-[80px] text-center">Done</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {weekDates.map((date) => {
                   const isTodayDate = isToday(date);
+                  const isDateInPast = isPastDate(date);
+                  const summary = dailySummary.find(
+                    (s) => s.date.getTime() === date.getTime()
+                  );
+
                   return (
                     <TableRow
                       key={date.toISOString()}
@@ -120,9 +148,17 @@ export function HabitTable() {
                       {habits.map((habit) => {
                         const active = isActiveDay(habit.activeDays, date);
                         const completed = isCompleted(habit.id, date);
+                        const isMissed = isDateInPast && active && !completed;
 
                         return (
-                          <TableCell key={habit.id} className="text-center">
+                          <TableCell
+                            key={habit.id}
+                            className={cn(
+                              "text-center",
+                              isMissed && "bg-red-50 dark:bg-red-950/20",
+                              completed && active && "bg-green-50 dark:bg-green-950/20"
+                            )}
+                          >
                             {active ? (
                               <Tooltip>
                                 <TooltipTrigger asChild>
@@ -133,9 +169,10 @@ export function HabitTable() {
                                         toggle(habit.id, date)
                                       }
                                       disabled={isToggling}
-                                      className={
-                                        isTodayDate ? "border-primary" : ""
-                                      }
+                                      className={cn(
+                                        isTodayDate && "border-primary",
+                                        isMissed && "border-red-400 dark:border-red-600"
+                                      )}
                                     />
                                   </div>
                                 </TooltipTrigger>
@@ -143,7 +180,9 @@ export function HabitTable() {
                                   <p>
                                     {completed
                                       ? "Mark as incomplete"
-                                      : "Mark as complete"}
+                                      : isMissed
+                                        ? "Missed - click to complete"
+                                        : "Mark as complete"}
                                   </p>
                                 </TooltipContent>
                               </Tooltip>
@@ -153,25 +192,68 @@ export function HabitTable() {
                           </TableCell>
                         );
                       })}
+                      {/* Daily summary cell */}
+                      <TableCell className="text-center">
+                        {summary && summary.active > 0 ? (
+                          <span
+                            className={cn(
+                              "text-sm",
+                              summary.completed === summary.active
+                                ? "text-green-600 dark:text-green-400 font-medium"
+                                : summary.completed === 0 && isDateInPast
+                                  ? "text-red-500"
+                                  : "text-muted-foreground"
+                            )}
+                          >
+                            {summary.completed}/{summary.active}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">-</span>
+                        )}
+                      </TableCell>
                     </TableRow>
                   );
                 })}
-                {/* Weekly summary row */}
-                <TableRow className="bg-muted/50 font-medium">
+                {/* Weekly summary row with Done and Streak */}
+                <TableRow className="bg-muted/50 font-medium border-t-2">
                   <TableCell>Weekly Progress</TableCell>
-                  {habits.map((habit) => (
-                    <TableCell key={habit.id} className="text-center">
-                      <span
-                        className={
-                          getCompletionCount(habit.id) >= habit.frequencyPerWeek
-                            ? "text-green-600"
-                            : ""
-                        }
-                      >
-                        {getCompletionCount(habit.id)}/{habit.frequencyPerWeek}
-                      </span>
-                    </TableCell>
-                  ))}
+                  {habits.map((habit) => {
+                    const streak = getStreakByHabitId(habit.id);
+                    const isAtRisk = atRiskHabits.some(
+                      (h) => h.habitId === habit.id
+                    );
+                    const completionCount = getCompletionCount(habit.id);
+                    const goalMet = completionCount >= habit.frequencyPerWeek;
+
+                    return (
+                      <TableCell key={habit.id} className="text-center">
+                        <div className="flex flex-col items-center gap-1">
+                          <span
+                            className={cn(
+                              goalMet && "text-green-600 dark:text-green-400"
+                            )}
+                          >
+                            {completionCount}/{habit.frequencyPerWeek}
+                          </span>
+                          {streak && (
+                            <HabitStreakBadge
+                              currentStreak={streak.currentStreak}
+                              longestStreak={streak.longestStreak}
+                              isAtRisk={isAtRisk}
+                              size="sm"
+                            />
+                          )}
+                        </div>
+                      </TableCell>
+                    );
+                  })}
+                  {/* Total summary */}
+                  <TableCell className="text-center">
+                    <span className="text-sm text-muted-foreground">
+                      {dailySummary.reduce((sum, d) => sum + d.completed, 0)}/
+                      {dailySummary.reduce((sum, d) => sum + d.active, 0)}
+                    </span>
+                  </TableCell>
                 </TableRow>
               </TableBody>
             </Table>

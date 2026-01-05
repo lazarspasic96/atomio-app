@@ -28,17 +28,25 @@ enum HabitCategory {
     OTHER
 }
 
+enum AchievementCategory {
+    STREAK
+    COMPLETIONS
+    CONSISTENCY
+    SPECIAL
+}
+
 // ============================================
 // USER MODEL
 // ============================================
 
 model User {
-    id        String     @id // This will be the Supabase Auth user ID
-    email     String     @unique
-    createdAt DateTime   @default(now())
-    updatedAt DateTime   @updatedAt
-    habits    Habit[]
-    stats     UserStats?
+    id           String            @id // This will be the Supabase Auth user ID
+    email        String            @unique
+    createdAt    DateTime          @default(now())
+    updatedAt    DateTime          @updatedAt
+    habits       Habit[]
+    stats        UserStats?
+    achievements UserAchievement[]
 }
 
 // ============================================
@@ -167,4 +175,37 @@ model WeeklyStat {
 
     @@unique([userStatsId, weekStartDate])
     @@index([weekStartDate])
+}
+
+// ============================================
+// ACHIEVEMENT SYSTEM (Phase 1)
+// ============================================
+
+model Achievement {
+    id          String              @id @default(cuid())
+    key         String              @unique // e.g., "streak_7", "completions_100"
+    name        String
+    description String
+    emoji       String
+    category    AchievementCategory
+    threshold   Int                 // Value needed to unlock
+    xpReward    Int                 @default(10)
+
+    userAchievements UserAchievement[]
+
+    createdAt DateTime @default(now())
+}
+
+model UserAchievement {
+    id            String      @id @default(cuid())
+    userId        String
+    achievementId String
+    user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+    achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+    earnedAt   DateTime @default(now())
+    celebrated Boolean  @default(false) // Has user seen/dismissed the celebration?
+
+    @@unique([userId, achievementId])
+    @@index([userId])
 }
