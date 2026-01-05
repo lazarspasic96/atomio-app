@@ -1,6 +1,7 @@
 "use client";
 
 import { useStats, useStreaks, useAnalytics } from "~/features/habits/hooks";
+import { CreateHabitDialog } from "~/features/habits/components";
 import { DailyScoreCard } from "./daily-score-card";
 import { StreakSummaryCard } from "./streak-summary-card";
 import { IdentityVotesCard } from "./identity-votes-card";
@@ -16,11 +17,14 @@ export function Dashboard() {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h2 className="text-lg font-semibold">Dashboard</h2>
-        <p className="text-sm text-muted-foreground">
-          Your habit tracking overview
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+          <h2 className="text-lg font-semibold">Dashboard</h2>
+          <p className="text-sm text-muted-foreground">
+            Your habit tracking overview
+          </p>
+        </div>
+        <CreateHabitDialog />
       </div>
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
