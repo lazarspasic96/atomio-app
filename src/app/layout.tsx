@@ -45,6 +45,11 @@ export default function RootLayout({
   return (
     <html lang="en" className={`${geist.variable}`}>
       <body>
+        <meta
+          name="google-site-verification"
+          content="40h5ox3LXcS5rpiQpbS4ja12j2jqjRfNqYcuob9Vve8"
+        />
+
         <TRPCReactProvider>{children}</TRPCReactProvider>
         <Toaster richColors position="bottom-right" />
       </body>
