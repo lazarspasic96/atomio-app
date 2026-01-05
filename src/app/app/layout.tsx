@@ -16,7 +16,7 @@ export default async function AppLayout({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <Header userEmail={user.email ?? "User"} />
-      <main className="container mx-auto flex-1 px-4 py-6">{children}</main>
+      <div className="flex-1">{children}</div>
     </div>
   );
 }
