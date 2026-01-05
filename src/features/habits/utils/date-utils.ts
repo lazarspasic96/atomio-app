@@ -13,12 +13,22 @@ export {
 // Additional habit-specific date utilities
 
 /**
- * Check if a day is active for a habit
+ * Check if a day is active for a habit (client-side, uses local timezone)
  * @param activeDays - Array of active day numbers (0=Sunday, 1=Monday, etc.)
- * @param date - The date to check
+ * @param date - The date to check (local date)
  */
 export function isActiveDay(activeDays: number[], date: Date): boolean {
   return activeDays.includes(date.getDay());
+}
+
+/**
+ * Check if a day is active for a habit (server-side, uses UTC)
+ * Use this when working with UTC midnight dates (e.g., in streak calculations)
+ * @param activeDays - Array of active day numbers (0=Sunday, 1=Monday, etc.)
+ * @param date - The date to check (UTC midnight date)
+ */
+export function isActiveDayUTC(activeDays: number[], date: Date): boolean {
+  return activeDays.includes(date.getUTCDay());
 }
 
 /**

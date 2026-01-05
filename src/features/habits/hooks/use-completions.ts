@@ -1,10 +1,10 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { api } from "~/trpc/react";
 import type { HabitWithCompletions } from "~/types";
-import { isSameDay } from "~/lib/utils";
+import { toUTCMidnight, isSameDayUTC } from "~/lib/utils";
 
 interface UseCompletionsOptions {
   startDate: Date;
@@ -14,25 +14,29 @@ interface UseCompletionsOptions {
 export function useCompletions({ startDate, endDate }: UseCompletionsOptions) {
   const utils = api.useUtils();
 
+  // Normalize dates to UTC midnight before sending to server
+  const normalizedStartDate = useMemo(() => toUTCMidnight(startDate), [startDate]);
+  const normalizedEndDate = useMemo(() => toUTCMidnight(endDate), [endDate]);
+
   const query = api.completion.getByDateRange.useQuery({
-    startDate,
-    endDate,
+    startDate: normalizedStartDate,
+    endDate: normalizedEndDate,
   });
 
   const toggleMutation = api.completion.toggle.useMutation({
     onMutate: async ({ habitId, date }) => {
       // Cancel any outgoing refetches
-      await utils.completion.getByDateRange.cancel({ startDate, endDate });
+      await utils.completion.getByDateRange.cancel({ startDate: normalizedStartDate, endDate: normalizedEndDate });
 
       // Snapshot the previous value
       const previousData = utils.completion.getByDateRange.getData({
-        startDate,
-        endDate,
+        startDate: normalizedStartDate,
+        endDate: normalizedEndDate,
       });
 
       // Optimistically update the cache
       utils.completion.getByDateRange.setData(
-        { startDate, endDate },
+        { startDate: normalizedStartDate, endDate: normalizedEndDate },
         (old) => {
           if (!old) return old;
 
@@ -40,7 +44,7 @@ export function useCompletions({ startDate, endDate }: UseCompletionsOptions) {
             if (habit.id !== habitId) return habit;
 
             const existingCompletion = habit.completions.find((c) =>
-              isSameDay(new Date(c.date), date),
+              isSameDayUTC(new Date(c.date), date),
             );
 
             if (existingCompletion) {
@@ -48,7 +52,7 @@ export function useCompletions({ startDate, endDate }: UseCompletionsOptions) {
               return {
                 ...habit,
                 completions: habit.completions.filter(
-                  (c) => !isSameDay(new Date(c.date), date),
+                  (c) => !isSameDayUTC(new Date(c.date), date),
                 ),
               };
             } else {
@@ -77,7 +81,7 @@ export function useCompletions({ startDate, endDate }: UseCompletionsOptions) {
       // Rollback to the previous value on error
       if (context?.previousData) {
         utils.completion.getByDateRange.setData(
-          { startDate, endDate },
+          { startDate: normalizedStartDate, endDate: normalizedEndDate },
           context.previousData,
         );
       }
@@ -87,13 +91,15 @@ export function useCompletions({ startDate, endDate }: UseCompletionsOptions) {
     },
     onSettled: () => {
       // Always refetch after error or success to ensure consistency
-      void utils.completion.getByDateRange.invalidate({ startDate, endDate });
+      void utils.completion.getByDateRange.invalidate({ startDate: normalizedStartDate, endDate: normalizedEndDate });
     },
   });
 
   const toggle = useCallback(
     (habitId: string, date: Date) => {
-      toggleMutation.mutate({ habitId, date });
+      // Normalize the date to UTC midnight before sending to server
+      const normalizedDate = toUTCMidnight(date);
+      toggleMutation.mutate({ habitId, date: normalizedDate });
     },
     [toggleMutation],
   );
@@ -104,7 +110,9 @@ export function useCompletions({ startDate, endDate }: UseCompletionsOptions) {
       const habit = query.data?.find((h) => h.id === habitId);
       if (!habit) return false;
 
-      return habit.completions.some((c) => isSameDay(new Date(c.date), date));
+      // Normalize the check date and use UTC comparison
+      const normalizedDate = toUTCMidnight(date);
+      return habit.completions.some((c) => isSameDayUTC(new Date(c.date), normalizedDate));
     },
     [query.data],
   );

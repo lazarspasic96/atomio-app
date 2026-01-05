@@ -35,12 +35,14 @@ export const completionRouter = createTRPCRouter({
         });
       }
 
-      // Normalize the date to start of day - use local methods to preserve user's intended date
+      // Date is already normalized to UTC midnight by the client
+      // Use UTC methods to ensure consistency
       const normalizedDate = new Date(
         Date.UTC(
-          input.date.getFullYear(),
-          input.date.getMonth(),
-          input.date.getDate(),
+          input.date.getUTCFullYear(),
+          input.date.getUTCMonth(),
+          input.date.getUTCDate(),
+          0, 0, 0, 0
         ),
       );
 
@@ -173,19 +175,22 @@ export const completionRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // Normalize dates to start of day (UTC)
+      // Dates are already normalized to UTC midnight by the client
+      // Use UTC methods to ensure consistency
       const normalizedStartDate = new Date(
         Date.UTC(
-          input.startDate.getFullYear(),
-          input.startDate.getMonth(),
-          input.startDate.getDate(),
+          input.startDate.getUTCFullYear(),
+          input.startDate.getUTCMonth(),
+          input.startDate.getUTCDate(),
+          0, 0, 0, 0
         ),
       );
       const normalizedEndDate = new Date(
         Date.UTC(
-          input.endDate.getFullYear(),
-          input.endDate.getMonth(),
-          input.endDate.getDate(),
+          input.endDate.getUTCFullYear(),
+          input.endDate.getUTCMonth(),
+          input.endDate.getUTCDate(),
+          23, 59, 59, 999
         ),
       );
 

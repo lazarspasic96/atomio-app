@@ -5,6 +5,37 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+/**
+ * Converts a local date to UTC midnight of that same calendar date.
+ * This ensures dates are timezone-agnostic when sent to the server.
+ *
+ * Example: User in UTC+1 clicks "January 3rd"
+ * - Local date: Jan 3, 00:00 local (= Jan 2, 23:00 UTC)
+ * - This function returns: Jan 3, 00:00 UTC
+ *
+ * This is the KEY function to solve timezone issues.
+ */
+export function toUTCMidnight(date: Date): Date {
+  return new Date(Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    0, 0, 0, 0
+  ));
+}
+
+/**
+ * Check if two dates represent the same calendar day.
+ * Uses UTC methods to ensure consistency regardless of timezone.
+ */
+export function isSameDayUTC(date1: Date, date2: Date): boolean {
+  return (
+    date1.getUTCFullYear() === date2.getUTCFullYear() &&
+    date1.getUTCMonth() === date2.getUTCMonth() &&
+    date1.getUTCDate() === date2.getUTCDate()
+  );
+}
+
 // Get the start of the week (Monday) for a given date
 export function getWeekStart(date: Date): Date {
   const d = new Date(date);

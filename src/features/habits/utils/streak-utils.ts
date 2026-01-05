@@ -1,7 +1,7 @@
-import { isActiveDay } from "./date-utils";
+import { isActiveDayUTC } from "./date-utils";
 
 /**
- * Check if a completion exists for a specific date
+ * Check if a completion exists for a specific date (using UTC comparison)
  */
 export function hasCompletionOnDate(
   completions: Array<{ date: Date | string }>,
@@ -10,37 +10,41 @@ export function hasCompletionOnDate(
   return completions.some((c) => {
     const completionDate = new Date(c.date);
     return (
-      completionDate.getFullYear() === date.getFullYear() &&
-      completionDate.getMonth() === date.getMonth() &&
-      completionDate.getDate() === date.getDate()
+      completionDate.getUTCFullYear() === date.getUTCFullYear() &&
+      completionDate.getUTCMonth() === date.getUTCMonth() &&
+      completionDate.getUTCDate() === date.getUTCDate()
     );
   });
 }
 
 /**
- * Get the start of day (midnight) for a date in local timezone
+ * Get the start of day (midnight UTC) for a date
+ * This creates a UTC date based on the local date components
  */
 export function startOfDay(date: Date): Date {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+  return new Date(Date.UTC(
+    date.getFullYear(),
+    date.getMonth(),
+    date.getDate(),
+    0, 0, 0, 0
+  ));
 }
 
 /**
- * Subtract days from a date
+ * Subtract days from a date (maintains UTC)
  */
 export function subDays(date: Date, days: number): Date {
   const d = new Date(date);
-  d.setDate(d.getDate() - days);
+  d.setUTCDate(d.getUTCDate() - days);
   return d;
 }
 
 /**
- * Add days to a date
+ * Add days to a date (maintains UTC)
  */
 export function addDays(date: Date, days: number): Date {
   const d = new Date(date);
-  d.setDate(d.getDate() + days);
+  d.setUTCDate(d.getUTCDate() + days);
   return d;
 }
 
@@ -61,7 +65,7 @@ export function calculateCurrentStreak(
   let checkDate = startOfDay(new Date());
 
   // If today is an active day and not yet completed, check if we should start from yesterday
-  if (isActiveDay(activeDays, checkDate)) {
+  if (isActiveDayUTC(activeDays, checkDate)) {
     if (!hasCompletionOnDate(completions, checkDate)) {
       // Today is not complete - but if it's early in the day, streak might still be alive
       // For simplicity, we'll check from yesterday (user can still complete today)
@@ -78,7 +82,7 @@ export function calculateCurrentStreak(
   let daysChecked = 0;
 
   while (daysChecked < maxDaysToCheck) {
-    if (isActiveDay(activeDays, checkDate)) {
+    if (isActiveDayUTC(activeDays, checkDate)) {
       if (hasCompletionOnDate(completions, checkDate)) {
         streak++;
       } else {
@@ -114,17 +118,17 @@ export function calculateLongestStreak(
     return dateA.getTime() - dateB.getTime();
   });
 
-  // Build a set of completion dates for fast lookup
+  // Build a set of completion dates for fast lookup (using UTC)
   const completionSet = new Set(
     sortedCompletions.map((c) => {
       const d = new Date(c.date);
-      return `${d.getFullYear()}-${d.getMonth()}-${d.getDate()}`;
+      return `${d.getUTCFullYear()}-${d.getUTCMonth()}-${d.getUTCDate()}`;
     })
   );
 
   const hasCompletion = (date: Date): boolean => {
     return completionSet.has(
-      `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`
+      `${date.getUTCFullYear()}-${date.getUTCMonth()}-${date.getUTCDate()}`
     );
   };
 
@@ -137,7 +141,7 @@ export function calculateLongestStreak(
   let checkDate = new Date(startDate);
 
   while (checkDate <= endDate) {
-    if (isActiveDay(activeDays, checkDate)) {
+    if (isActiveDayUTC(activeDays, checkDate)) {
       if (hasCompletion(checkDate)) {
         currentStreak++;
         longestStreak = Math.max(longestStreak, currentStreak);
@@ -168,7 +172,7 @@ export function findStreakStartDate(
   let streakStartDate: Date | null = null;
 
   // Handle today
-  if (isActiveDay(activeDays, checkDate)) {
+  if (isActiveDayUTC(activeDays, checkDate)) {
     if (!hasCompletionOnDate(completions, checkDate)) {
       checkDate = subDays(checkDate, 1);
     }
@@ -180,7 +184,7 @@ export function findStreakStartDate(
   let daysChecked = 0;
 
   while (daysChecked < maxDaysToCheck) {
-    if (isActiveDay(activeDays, checkDate)) {
+    if (isActiveDayUTC(activeDays, checkDate)) {
       if (hasCompletionOnDate(completions, checkDate)) {
         streakStartDate = new Date(checkDate);
       } else {
@@ -209,7 +213,7 @@ export function isStreakAtRisk(
 
   const today = startOfDay(new Date());
 
-  if (!isActiveDay(activeDays, today)) {
+  if (!isActiveDayUTC(activeDays, today)) {
     return false; // Not an active day
   }
 
