@@ -26,6 +26,8 @@ export function Logo({
   const primaryColor = theme === "light" ? "#000000" : "#FFFFFF";
   const accentColor = "#10B981"; // Emerald green
 
+  const orbitColor = theme === "auto" ? "currentColor" : (theme === "light" ? "#6B7280" : "#6B7280");
+
   const LogoIcon = () => (
     <svg
       width={iconSize}
@@ -35,49 +37,43 @@ export function Logo({
       xmlns="http://www.w3.org/2000/svg"
       className="shrink-0"
     >
-      {/* Outer orbital ring */}
+      {/* First orbital ring - tilted left */}
       <ellipse
         cx="24"
         cy="24"
-        rx="20"
+        rx="18"
         ry="8"
-        stroke={theme === "auto" ? "currentColor" : primaryColor}
-        strokeWidth="2"
-        strokeOpacity="0.3"
-        transform="rotate(-30 24 24)"
+        stroke={orbitColor}
+        strokeWidth="2.5"
+        strokeOpacity="0.6"
+        fill="none"
+        transform="rotate(-45 24 24)"
       />
-      {/* Second orbital ring */}
+      {/* Second orbital ring - tilted right */}
       <ellipse
         cx="24"
         cy="24"
-        rx="20"
+        rx="18"
         ry="8"
-        stroke={theme === "auto" ? "currentColor" : primaryColor}
-        strokeWidth="2"
-        strokeOpacity="0.3"
-        transform="rotate(30 24 24)"
+        stroke={orbitColor}
+        strokeWidth="2.5"
+        strokeOpacity="0.6"
+        fill="none"
+        transform="rotate(45 24 24)"
       />
-      {/* Center nucleus */}
+      {/* Center nucleus - white */}
       <circle
         cx="24"
         cy="24"
-        r="6"
+        r="7"
         fill={theme === "auto" ? "currentColor" : primaryColor}
       />
-      {/* Orbiting electron - green accent */}
+      {/* Green electron dot */}
       <circle
-        cx="40"
-        cy="16"
-        r="4"
+        cx="37"
+        cy="11"
+        r="5"
         fill={accentColor}
-      />
-      {/* Small glow effect on electron */}
-      <circle
-        cx="40"
-        cy="16"
-        r="6"
-        fill={accentColor}
-        fillOpacity="0.2"
       />
     </svg>
   );
@@ -99,7 +95,7 @@ export function Logo({
   if (variant === "wordmark") {
     return (
       <span className={cn("font-semibold tracking-tight lowercase", textSize, textColorClass, className)}>
-        atomio
+        atomi<span className="text-emerald-500">o</span>
       </span>
     );
   }
@@ -108,7 +104,7 @@ export function Logo({
     <div className={cn("inline-flex items-center gap-2", className)}>
       <LogoIcon />
       <span className={cn("font-semibold tracking-tight lowercase", textSize, textColorClass)}>
-        atomio
+        atomi<span className="text-emerald-500">o</span>
       </span>
     </div>
   );
@@ -126,21 +122,34 @@ export function LogoFavicon({ size = 32 }: { size?: number }) {
     >
       {/* Dark background */}
       <rect width="48" height="48" rx="10" fill="#0A0A0A" />
-      {/* Simplified orbital */}
+      {/* First orbital ring */}
       <ellipse
         cx="24"
         cy="24"
         rx="14"
         ry="6"
-        stroke="white"
+        stroke="#6B7280"
         strokeWidth="2"
-        strokeOpacity="0.4"
-        transform="rotate(-30 24 24)"
+        strokeOpacity="0.6"
+        fill="none"
+        transform="rotate(-45 24 24)"
+      />
+      {/* Second orbital ring */}
+      <ellipse
+        cx="24"
+        cy="24"
+        rx="14"
+        ry="6"
+        stroke="#6B7280"
+        strokeWidth="2"
+        strokeOpacity="0.6"
+        fill="none"
+        transform="rotate(45 24 24)"
       />
       {/* Center nucleus */}
-      <circle cx="24" cy="24" r="5" fill="white" />
+      <circle cx="24" cy="24" r="6" fill="white" />
       {/* Green electron */}
-      <circle cx="35" cy="17" r="4" fill="#10B981" />
+      <circle cx="34" cy="14" r="4" fill="#10B981" />
     </svg>
   );
 }

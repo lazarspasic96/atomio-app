@@ -13,7 +13,11 @@ export const metadata: Metadata = {
   },
   description:
     "Track your daily habits and watch 1% daily improvements compound into life-changing results. Simple, beautiful, and completely free forever.",
-  icons: [{ rel: "icon", url: "/favicon.ico" }],
+  icons: [
+    { rel: "icon", url: "/favicon.ico", sizes: "any" },
+    { rel: "icon", url: "/favicon.svg", type: "image/svg+xml" },
+    { rel: "apple-touch-icon", url: "/favicon.svg" },
+  ],
   openGraph: {
     type: "website",
     locale: "en_US",
