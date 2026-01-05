@@ -71,7 +71,7 @@ export function HabitCalendarDayCell({
       </div>
 
       {/* Habits list */}
-      <div className="space-y-1">
+      <div className="space-y-1.5">
         {habits.map((habit) => {
           const completed = isCompleted(habit.id, day);
 
@@ -79,21 +79,22 @@ export function HabitCalendarDayCell({
             <Tooltip key={habit.id}>
               <TooltipTrigger asChild>
                 <div
-                  className={`flex cursor-pointer items-center gap-1.5 rounded px-1.5 py-1 text-xs transition-colors ${
+                  className={`flex cursor-pointer items-center gap-2 rounded-md border px-2 py-1.5 text-sm transition-colors ${
                     completed
-                      ? "bg-green-500/20 text-green-700 dark:text-green-400"
-                      : "bg-muted/50 hover:bg-muted"
+                      ? "border-green-500/50 bg-green-500/20 text-green-700 dark:border-green-500/30 dark:text-green-400"
+                      : "border-border bg-muted/80 hover:bg-muted"
                   }`}
                   onClick={() => !isToggling && toggle(habit.id, day)}
                 >
                   <Checkbox
                     checked={completed}
                     onCheckedChange={() => toggle(habit.id, day)}
+                    onClick={(e) => e.stopPropagation()}
                     disabled={isToggling}
-                    className="h-3.5 w-3.5"
+                    className="h-4 w-4 border-2"
                   />
                   <span
-                    className={`truncate ${completed ? "line-through" : ""}`}
+                    className={`truncate font-medium ${completed ? "line-through opacity-70" : ""}`}
                   >
                     {habit.name}
                   </span>
