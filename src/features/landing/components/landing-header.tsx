@@ -30,10 +30,10 @@ export function LandingHeader() {
   return (
     <header
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 transition-all duration-300",
+        "fixed top-0 right-0 left-0 z-50 transition-all duration-300",
         isScrolled
-          ? "bg-[#0a0a0a]/95 backdrop-blur-md border-b border-border"
-          : "bg-transparent"
+          ? "border-border border-b bg-[#0a0a0a]/95 backdrop-blur-md"
+          : "bg-transparent",
       )}
     >
       <div className="container mx-auto px-4">
@@ -44,12 +44,12 @@ export function LandingHeader() {
           </Link>
 
           {/* Desktop Navigation */}
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden items-center gap-8 md:flex">
             {navLinks.map((link) => (
               <a
                 key={link.href}
                 href={link.href}
-                className="text-sm font-medium text-muted-foreground hover:text-white transition-colors"
+                className="text-muted-foreground text-sm font-medium transition-colors hover:text-white"
               >
                 {link.label}
               </a>
@@ -57,13 +57,17 @@ export function LandingHeader() {
           </nav>
 
           {/* Desktop CTA */}
-          <div className="hidden md:flex items-center gap-4">
-            <Button variant="ghost" asChild className="text-muted-foreground hover:text-white">
+          <div className="hidden items-center gap-4 md:flex">
+            <Button
+              variant="ghost"
+              asChild
+              className="text-muted-foreground hover:text-white"
+            >
               <Link href="/login">Log in</Link>
             </Button>
             <Button
               asChild
-              className="bg-emerald-500 hover:bg-emerald-600 text-white transition-all hover:glow-green-sm"
+              className="hover:glow-green-sm bg-emerald-500 text-white transition-all hover:bg-emerald-600"
             >
               <Link href="/register">Get Started</Link>
             </Button>
@@ -77,25 +81,35 @@ export function LandingHeader() {
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[300px] bg-[#0a0a0a] border-border">
-              <div className="flex flex-col gap-6 mt-8">
+            <SheetContent
+              side="right"
+              className="border-border w-[300px] bg-[#0a0a0a]"
+            >
+              <div className="mt-8 flex flex-col gap-6 p-4">
                 <nav className="flex flex-col gap-4">
                   {navLinks.map((link) => (
                     <a
                       key={link.href}
                       href={link.href}
                       onClick={() => setMobileMenuOpen(false)}
-                      className="text-lg font-medium text-muted-foreground hover:text-white transition-colors"
+                      className="text-muted-foreground text-lg font-medium transition-colors hover:text-white"
                     >
                       {link.label}
                     </a>
                   ))}
                 </nav>
-                <div className="flex flex-col gap-3 pt-4 border-t border-border">
-                  <Button variant="outline" asChild className="border-border text-white">
+                <div className="border-border flex flex-col gap-3 border-t pt-4">
+                  <Button
+                    variant="outline"
+                    asChild
+                    className="border-border text-white"
+                  >
                     <Link href="/login">Log in</Link>
                   </Button>
-                  <Button asChild className="bg-emerald-500 hover:bg-emerald-600 text-white">
+                  <Button
+                    asChild
+                    className="bg-emerald-500 text-white hover:bg-emerald-600"
+                  >
                     <Link href="/register">Get Started</Link>
                   </Button>
                 </div>
