@@ -45,7 +45,7 @@ export function WhyFreeSection() {
 
             {/* GitHub Link */}
             <a
-              href="https://github.com"
+              href="https://github.com/lazarspasic96/atomio-app"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 text-sm text-emerald-500 hover:text-emerald-400 font-medium transition-colors"

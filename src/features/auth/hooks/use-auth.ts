@@ -73,6 +73,32 @@ export function useAuth() {
     [supabase.auth],
   );
 
+  const signInWithGoogle = useCallback(async () => {
+    setIsLoading(true);
+    try {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback?next=/app`,
+        },
+      });
+
+      if (error) {
+        toast.error("Google sign in failed", { description: error.message });
+        return { success: false, error };
+      }
+
+      return { success: true, error: null };
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "An unexpected error occurred";
+      toast.error("Google sign in failed", { description: message });
+      return { success: false, error };
+    } finally {
+      setIsLoading(false);
+    }
+  }, [supabase.auth]);
+
   const signOut = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -100,6 +126,7 @@ export function useAuth() {
   return {
     signIn,
     signUp,
+    signInWithGoogle,
     signOut,
     isLoading,
   };

@@ -13,7 +13,7 @@ const footerLinks = {
     { label: "Terms", href: "/terms" },
   ],
   social: [
-    { label: "GitHub", href: "https://github.com", icon: Github },
+    { label: "GitHub", href: "https://github.com/lazarspasic96/atomio-app", icon: Github },
     { label: "Twitter", href: "https://twitter.com", icon: Twitter },
   ],
 };
