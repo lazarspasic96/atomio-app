@@ -210,7 +210,18 @@ export function EditHabitDialog({ habit, onSuccess }: EditHabitDialogProps) {
                 <FormItem>
                   <FormLabel>Frequency per Week</FormLabel>
                   <Select
-                    onValueChange={(value) => field.onChange(parseInt(value))}
+                    onValueChange={(value) => {
+                      const newFrequency = parseInt(value);
+                      field.onChange(newFrequency);
+
+                      // Auto-select days if frequency exceeds current active days
+                      const currentDays = form.getValues("activeDays") ?? [];
+                      if (newFrequency > currentDays.length) {
+                        const allDays = [1, 2, 3, 4, 5, 6, 0]; // Mon-Sun
+                        const daysNeeded = allDays.slice(0, newFrequency);
+                        form.setValue("activeDays", daysNeeded, { shouldValidate: true });
+                      }
+                    }}
                     value={field.value.toString()}
                     disabled={isUpdating}
                   >
@@ -235,47 +246,56 @@ export function EditHabitDialog({ habit, onSuccess }: EditHabitDialogProps) {
             <FormField
               control={form.control}
               name="activeDays"
-              render={() => (
-                <FormItem>
-                  <FormLabel>Active Days</FormLabel>
-                  <div className="flex flex-wrap gap-3">
-                    {DAYS_OF_WEEK.map((day) => (
-                      <FormField
-                        key={day.value}
-                        control={form.control}
-                        name="activeDays"
-                        render={({ field }) => (
-                          <FormItem className="flex items-center space-x-2 space-y-0">
-                            <FormControl>
-                              <Checkbox
-                                checked={field.value?.includes(day.value)}
-                                onCheckedChange={(checked) => {
-                                  const current = field.value ?? [];
-                                  if (checked) {
-                                    field.onChange([...current, day.value]);
-                                  } else {
-                                    field.onChange(
-                                      current.filter((v) => v !== day.value),
-                                    );
-                                  }
-                                }}
-                                disabled={isUpdating}
-                              />
-                            </FormControl>
-                            <FormLabel className="cursor-pointer text-sm font-normal">
-                              {day.label}
-                            </FormLabel>
-                          </FormItem>
-                        )}
-                      />
-                    ))}
-                  </div>
-                  <FormDescription>
-                    Only checked days will show checkboxes in the calendar
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
+              render={() => {
+                const frequency = form.watch("frequencyPerWeek");
+                return (
+                  <FormItem>
+                    <FormLabel>Active Days</FormLabel>
+                    <div className="flex flex-wrap gap-3">
+                      {DAYS_OF_WEEK.map((day) => (
+                        <FormField
+                          key={day.value}
+                          control={form.control}
+                          name="activeDays"
+                          render={({ field }) => {
+                            const isChecked = field.value?.includes(day.value);
+                            const currentCount = field.value?.length ?? 0;
+                            const canUncheck = !isChecked || currentCount > frequency;
+
+                            return (
+                              <FormItem className="flex items-center space-x-2 space-y-0">
+                                <FormControl>
+                                  <Checkbox
+                                    checked={isChecked}
+                                    onCheckedChange={(checked) => {
+                                      const current = field.value ?? [];
+                                      if (checked) {
+                                        field.onChange([...current, day.value]);
+                                      } else if (canUncheck) {
+                                        field.onChange(
+                                          current.filter((v) => v !== day.value),
+                                        );
+                                      }
+                                    }}
+                                    disabled={isUpdating || (isChecked && !canUncheck)}
+                                  />
+                                </FormControl>
+                                <FormLabel className="cursor-pointer text-sm font-normal">
+                                  {day.label}
+                                </FormLabel>
+                              </FormItem>
+                            );
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <FormDescription>
+                      Select at least {frequency} {frequency === 1 ? "day" : "days"} to match your frequency
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                );
+              }}
             />
 
             <DialogFooter>

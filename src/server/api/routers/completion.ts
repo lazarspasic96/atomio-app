@@ -35,12 +35,12 @@ export const completionRouter = createTRPCRouter({
         });
       }
 
-      // Normalize the date to start of day (UTC) - use UTC methods to avoid timezone issues
+      // Normalize the date to start of day - use local methods to preserve user's intended date
       const normalizedDate = new Date(
         Date.UTC(
-          input.date.getUTCFullYear(),
-          input.date.getUTCMonth(),
-          input.date.getUTCDate(),
+          input.date.getFullYear(),
+          input.date.getMonth(),
+          input.date.getDate(),
         ),
       );
 
