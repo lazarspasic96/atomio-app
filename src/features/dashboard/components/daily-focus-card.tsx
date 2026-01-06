@@ -192,18 +192,24 @@ function FocusSection({
       border: "border-red-200 dark:border-red-900",
       title: "text-red-700 dark:text-red-400",
       icon: "text-red-500",
+      text: "text-red-900 dark:text-red-100",
+      subtext: "text-red-700/70 dark:text-red-300/70",
     },
     amber: {
       bg: "bg-amber-50 dark:bg-amber-950/30",
       border: "border-amber-200 dark:border-amber-900",
       title: "text-amber-700 dark:text-amber-400",
       icon: "text-amber-500",
+      text: "text-amber-900 dark:text-amber-100",
+      subtext: "text-amber-700/70 dark:text-amber-300/70",
     },
     blue: {
       bg: "bg-blue-50 dark:bg-blue-950/30",
       border: "border-blue-200 dark:border-blue-900",
       title: "text-blue-700 dark:text-blue-400",
       icon: "text-blue-500",
+      text: "text-blue-900 dark:text-blue-100",
+      subtext: "text-blue-700/70 dark:text-blue-300/70",
     },
   };
 
@@ -226,11 +232,11 @@ function FocusSection({
             className="group flex w-full items-center justify-between rounded px-2 py-1.5 text-left transition-colors hover:bg-white/50 dark:hover:bg-white/5"
           >
             <div className="min-w-0">
-              <p className="truncate text-sm font-medium">
+              <p className={cn("truncate text-sm font-medium", colors.text)}>
                 {habit.emoji && <span className="mr-1">{habit.emoji}</span>}
                 {habit.name}
               </p>
-              <p className="truncate text-xs text-muted-foreground">
+              <p className={cn("truncate text-xs", colors.subtext)}>
                 {habit.reason}
               </p>
             </div>
@@ -243,7 +249,7 @@ function FocusSection({
           </button>
         ))}
         {habits.length > 3 && (
-          <p className="text-xs text-muted-foreground">
+          <p className={cn("text-xs", colors.subtext)}>
             +{habits.length - 3} more
           </p>
         )}

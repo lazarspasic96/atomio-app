@@ -77,7 +77,7 @@ export function StreakSummaryCard({
                       key={habit.habitId}
                       className="flex items-center justify-between rounded bg-amber-50 px-2 py-1 text-sm dark:bg-amber-950/30"
                     >
-                      <span className="truncate">
+                      <span className="truncate text-amber-900 dark:text-amber-100">
                         {habit.emoji && <span className="mr-1">{habit.emoji}</span>}
                         {habit.habitName}
                       </span>

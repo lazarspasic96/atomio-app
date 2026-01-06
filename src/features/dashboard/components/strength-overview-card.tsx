@@ -230,11 +230,17 @@ function StrengthRow({
       )}
     >
       <div className="flex items-center justify-between mb-1">
-        <span className="text-sm truncate">
+        <span className={cn(
+          "text-sm truncate",
+          highlight ? "text-orange-900 dark:text-orange-100" : "text-foreground"
+        )}>
           {emoji && <span className="mr-1">{emoji}</span>}
           {name}
         </span>
-        <span className="text-xs font-medium">{strength}%</span>
+        <span className={cn(
+          "text-xs font-medium",
+          highlight ? "text-orange-700 dark:text-orange-300" : "text-foreground"
+        )}>{strength}%</span>
       </div>
       <div className="h-1 w-full rounded-full bg-muted overflow-hidden">
         <div
