@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getUser } from "~/lib/supabase/server";
 import { Header } from "~/components/layout/header";
 import { AchievementCelebrator } from "~/features/achievements";
+import { CelebrationWatcher } from "~/features/celebrations";
 
 export default async function AppLayout({
   children,
@@ -18,7 +19,9 @@ export default async function AppLayout({
     <div className="flex min-h-screen flex-col bg-background">
       <Header userEmail={user.email ?? "User"} />
       <AchievementCelebrator>
-        <div className="flex-1">{children}</div>
+        <CelebrationWatcher>
+          <div className="flex-1">{children}</div>
+        </CelebrationWatcher>
       </AchievementCelebrator>
     </div>
   );

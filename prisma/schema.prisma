@@ -47,6 +47,8 @@ model User {
     habits       Habit[]
     stats        UserStats?
     achievements UserAchievement[]
+    weeklyReviews WeeklyReview[]
+    celebrations  Celebration[]
 }
 
 // ============================================
@@ -70,6 +72,9 @@ model Habit {
 
     // Streak tracking (denormalized for performance)
     streakData HabitStreak?
+
+    // Habit strength (Phase 2)
+    strengthData HabitStrength?
 
     @@index([userId])
     @@index([category])
@@ -208,4 +213,99 @@ model UserAchievement {
 
     @@unique([userId, achievementId])
     @@index([userId])
+}
+
+// ============================================
+// HABIT STRENGTH (Phase 2)
+// ============================================
+
+model HabitStrength {
+    id      String @id @default(cuid())
+    habitId String @unique
+    habit   Habit  @relation(fields: [habitId], references: [id], onDelete: Cascade)
+
+    // Current strength score (0-100)
+    strength Int @default(0)
+
+    // Individual factor scores (0-100 each)
+    currentStreakScore Int @default(0)
+    consistencyScore   Int @default(0)
+    longevityScore     Int @default(0)
+    recoveryScore      Int @default(0)
+    trendScore         Int @default(0)
+
+    // Tracking data for calculations
+    missedDaysCount Int @default(0) // Total missed active days
+    recoveryCount   Int @default(0) // Times recovered within 1 day
+    last30DaysRate  Float @default(0) // Consistency percentage for last 30 days
+
+    updatedAt DateTime @updatedAt
+}
+
+// ============================================
+// WEEKLY REVIEW (Phase 2)
+// ============================================
+
+model WeeklyReview {
+    id     String @id @default(cuid())
+    userId String
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    // Time period
+    weekStartDate DateTime @db.Date // Monday of the week
+    weekEndDate   DateTime @db.Date // Sunday of the week
+
+    // Core metrics
+    completionRate Float // 0-100
+    totalCompleted Int
+    totalPossible  Int
+
+    // Comparison
+    previousWeekRate   Float?
+    changeFromPrevious Float? // Percentage change (+12%, -5%)
+
+    // Analysis
+    bestHabitId          String?
+    worstHabitId         String?
+    longestStreakHabitId String?
+    newStreakMilestones  Json? // Array of milestones hit this week
+
+    // Generated content
+    wins            Json   // Array of win strings
+    needsAttention  Json   // Array of attention strings
+    focusSuggestion String? // Personalized suggestion for next week
+    insights        Json?  // Additional insights
+
+    // Habits performance breakdown
+    habitPerformance Json? // Array of per-habit performance data
+
+    // Meta
+    generatedAt DateTime  @default(now())
+    viewedAt    DateTime? // When user first viewed it
+
+    @@unique([userId, weekStartDate])
+    @@index([userId, weekStartDate])
+}
+
+// ============================================
+// CELEBRATIONS (Phase 2)
+// ============================================
+
+model Celebration {
+    id      String @id @default(cuid())
+    userId  String
+    user    User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    type    String  // Milestone type (streak_7, perfect_week, etc.)
+    habitId String? // Related habit (if applicable)
+    value   Int     // The milestone value (7 for streak_7)
+
+    title   String // Display title
+    message String // Display message
+
+    triggeredAt DateTime  @default(now())
+    viewedAt    DateTime?
+    sharedAt    DateTime?
+
+    @@index([userId, triggeredAt])
 }

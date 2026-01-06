@@ -3,3 +3,5 @@ export { useCompletions } from "./use-completions";
 export { useWeekNavigation } from "./use-week-navigation";
 export { useStreaks, useStats } from "./use-streaks";
 export { useAnalytics } from "./use-analytics";
+export { useStrength, useHabitStrength } from "./use-strength";
+export { useFocus } from "./use-focus";

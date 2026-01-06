@@ -7,6 +7,13 @@ import {
   findStreakStartDate,
   isNewMilestone,
 } from "~/features/habits/utils/streak-utils";
+import {
+  calculateHabitStrength,
+  calculateConsistencyRate,
+  calculateRecoveryRate,
+  calculateTrend,
+  type HabitStrengthFactors,
+} from "~/lib/strength";
 
 export const completionRouter = createTRPCRouter({
   toggle: protectedProcedure
@@ -195,6 +202,20 @@ export const completionRouter = createTRPCRouter({
           where: { userId: ctx.dbUser.id },
         });
 
+        // Get consecutive misses before this completion (for comeback achievements)
+        const consecutiveMisses = habit.streakData?.consecutiveMisses ?? 0;
+
+        // Get user's highest strength across all habits (for strength achievements)
+        const allStrengths = await ctx.db.habitStrength.findMany({
+          where: {
+            habit: { userId: ctx.dbUser.id },
+          },
+          select: { strength: true },
+        });
+        const maxStrength = allStrengths.length > 0
+          ? Math.max(...allStrengths.map((s) => s.strength))
+          : 0;
+
         // Find achievements the user hasn't earned yet that they now qualify for
         const eligibleAchievements = await ctx.db.achievement.findMany({
           where: {
@@ -208,6 +229,16 @@ export const completionRouter = createTRPCRouter({
               { key: "first_habit", threshold: { lte: habitCount } },
               { key: "habits_3", threshold: { lte: habitCount } },
               { key: "habits_5", threshold: { lte: habitCount } },
+              // Strength achievements (match keys that start with strength_)
+              { key: "strength_50", threshold: { lte: maxStrength } },
+              { key: "strength_80", threshold: { lte: maxStrength } },
+              { key: "strength_90", threshold: { lte: maxStrength } },
+              { key: "strength_100", threshold: { lte: maxStrength } },
+              // Comeback achievements (match keys that start with comeback_)
+              { key: "comeback_3", threshold: { lte: consecutiveMisses } },
+              { key: "comeback_7", threshold: { lte: consecutiveMisses } },
+              { key: "comeback_14", threshold: { lte: consecutiveMisses } },
+              { key: "comeback_30", threshold: { lte: consecutiveMisses } },
             ],
             NOT: {
               userAchievements: {
@@ -249,12 +280,119 @@ export const completionRouter = createTRPCRouter({
         }
       }
 
+      // Update habit strength (Phase 2)
+      const consistencyLast30Days = calculateConsistencyRate(
+        completions,
+        habit.activeDays,
+        30
+      );
+
+      const { recoveryRate, missedCount, recoveryCount } = calculateRecoveryRate(
+        completions,
+        habit.activeDays,
+        habit.createdAt
+      );
+
+      const trend = calculateTrend(completions, habit.activeDays);
+
+      const habitAgeDays = Math.floor(
+        (Date.now() - habit.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+      );
+
+      const strengthFactors: HabitStrengthFactors = {
+        currentStreak,
+        longestStreak,
+        totalCompletions: completions.length,
+        consistencyLast30Days,
+        recoveryRate,
+        habitAgeDays,
+        recentTrend: trend,
+      };
+
+      const strengthScores = calculateHabitStrength(strengthFactors);
+
+      await ctx.db.habitStrength.upsert({
+        where: { habitId: input.habitId },
+        create: {
+          habitId: input.habitId,
+          strength: strengthScores.strength,
+          currentStreakScore: strengthScores.currentStreakScore,
+          consistencyScore: strengthScores.consistencyScore,
+          longevityScore: strengthScores.longevityScore,
+          recoveryScore: strengthScores.recoveryScore,
+          trendScore: strengthScores.trendScore,
+          missedDaysCount: missedCount,
+          recoveryCount: recoveryCount,
+          last30DaysRate: consistencyLast30Days,
+        },
+        update: {
+          strength: strengthScores.strength,
+          currentStreakScore: strengthScores.currentStreakScore,
+          consistencyScore: strengthScores.consistencyScore,
+          longevityScore: strengthScores.longevityScore,
+          recoveryScore: strengthScores.recoveryScore,
+          trendScore: strengthScores.trendScore,
+          missedDaysCount: missedCount,
+          recoveryCount: recoveryCount,
+          last30DaysRate: consistencyLast30Days,
+        },
+      });
+
+      // Create celebration for milestone streaks
+      let newCelebration: { id: string; type: string; title: string; message: string; value: number } | null = null;
+
+      if (completed && milestone) {
+        // Milestone thresholds that trigger celebrations
+        const celebrationMilestones = [7, 14, 21, 30, 50, 66, 100, 150, 200, 365];
+
+        if (celebrationMilestones.includes(currentStreak)) {
+          const celebrationMessages: Record<number, { title: string; message: string }> = {
+            7: { title: "One Week Strong!", message: `You've completed ${habit.name} for 7 days straight. You're building a real habit!` },
+            14: { title: "Two Weeks!", message: `14 days of consistency with ${habit.name}. You're proving this is who you are now.` },
+            21: { title: "Three Weeks!", message: `21 days! ${habit.name} is becoming automatic. Keep going!` },
+            30: { title: "One Month!", message: `30 days of ${habit.name}! You've shown incredible dedication.` },
+            50: { title: "50 Days!", message: `Half a hundred! ${habit.name} is truly part of who you are now.` },
+            66: { title: "66 Days - Habit Formed!", message: `Research says it takes 66 days to form a habit. ${habit.name} is now automatic!` },
+            100: { title: "100 Days!", message: `Triple digits! Your commitment to ${habit.name} is extraordinary.` },
+            150: { title: "150 Days!", message: `150 days of ${habit.name}! You're in the top 1% of habit builders.` },
+            200: { title: "200 Days!", message: `200 days! ${habit.name} has become part of your identity.` },
+            365: { title: "One Year!", message: `365 days of ${habit.name}! You've transformed your life.` },
+          };
+
+          const content = celebrationMessages[currentStreak] ?? {
+            title: "Milestone Reached!",
+            message: `You've hit a ${currentStreak}-day milestone with ${habit.name}. Keep building!`,
+          };
+
+          const celebration = await ctx.db.celebration.create({
+            data: {
+              userId: ctx.dbUser.id,
+              type: `streak_${currentStreak}`,
+              habitId: habit.id,
+              value: currentStreak,
+              title: content.title,
+              message: content.message,
+            },
+          });
+
+          newCelebration = {
+            id: celebration.id,
+            type: celebration.type,
+            title: celebration.title,
+            message: celebration.message,
+            value: celebration.value,
+          };
+        }
+      }
+
       return {
         completed,
         currentStreak,
         longestStreak,
         milestone,
         newAchievements,
+        strength: strengthScores.strength,
+        newCelebration,
       };
     }),
 

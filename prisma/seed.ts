@@ -153,6 +153,82 @@ const ACHIEVEMENTS = [
     xpReward: 300,
   },
 
+  // Strength achievements
+  {
+    key: "strength_50",
+    name: "Getting Stronger",
+    description: "Reach 50% habit strength",
+    emoji: "💪",
+    category: "CONSISTENCY" as const,
+    threshold: 50,
+    xpReward: 50,
+  },
+  {
+    key: "strength_80",
+    name: "Strong Habit",
+    description: "Reach 80% habit strength - your habit is becoming automatic",
+    emoji: "⚡",
+    category: "CONSISTENCY" as const,
+    threshold: 80,
+    xpReward: 150,
+  },
+  {
+    key: "strength_90",
+    name: "Iron Will",
+    description: "Reach 90% habit strength - nearly unbreakable",
+    emoji: "🔱",
+    category: "CONSISTENCY" as const,
+    threshold: 90,
+    xpReward: 250,
+  },
+  {
+    key: "strength_100",
+    name: "Maximum Power",
+    description: "Achieve 100% habit strength - pure mastery",
+    emoji: "✨",
+    category: "CONSISTENCY" as const,
+    threshold: 100,
+    xpReward: 500,
+  },
+
+  // Comeback achievements
+  {
+    key: "comeback_3",
+    name: "Back on Track",
+    description: "Resume a habit after missing 3+ days",
+    emoji: "🔄",
+    category: "SPECIAL" as const,
+    threshold: 3,
+    xpReward: 25,
+  },
+  {
+    key: "comeback_7",
+    name: "The Phoenix",
+    description: "Resume a habit after missing 7+ days",
+    emoji: "🔥",
+    category: "SPECIAL" as const,
+    threshold: 7,
+    xpReward: 75,
+  },
+  {
+    key: "comeback_14",
+    name: "Never Give Up",
+    description: "Resume a habit after missing 14+ days",
+    emoji: "🦅",
+    category: "SPECIAL" as const,
+    threshold: 14,
+    xpReward: 150,
+  },
+  {
+    key: "comeback_30",
+    name: "Resurrection",
+    description: "Resume a habit after missing 30+ days",
+    emoji: "🌅",
+    category: "SPECIAL" as const,
+    threshold: 30,
+    xpReward: 250,
+  },
+
   // Special achievements
   {
     key: "first_habit",

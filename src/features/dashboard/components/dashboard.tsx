@@ -1,10 +1,13 @@
 "use client";
 
-import { useStats, useStreaks, useAnalytics } from "~/features/habits/hooks";
+import { useStats, useStreaks, useAnalytics, useStrength, useFocus } from "~/features/habits/hooks";
 import { CreateHabitDialog } from "~/features/habits/components";
 import { AchievementsSummaryCard } from "~/features/achievements";
+import { WeeklyReviewCard, useWeeklyReview } from "~/features/review";
 import { DailyScoreCard } from "./daily-score-card";
 import { StreakSummaryCard } from "./streak-summary-card";
+import { StrengthOverviewCard } from "./strength-overview-card";
+import { DailyFocusCard } from "./daily-focus-card";
 import { IdentityVotesCard } from "./identity-votes-card";
 import { WeeklyTrendsCard } from "./weekly-trends-card";
 import { BestDayCard } from "./best-day-card";
@@ -14,6 +17,9 @@ export function Dashboard() {
   const { dashboard, isLoadingDashboard, identityVotes, isLoadingIdentityVotes } = useStats();
   const { streaks, atRiskHabits, isLoading: isLoadingStreaks } = useStreaks();
   const { weeklyTrends, completionPatterns, isLoadingWeeklyTrends, isLoadingPatterns } = useAnalytics();
+  const { strengths, summary, isLoading: isLoadingStrength } = useStrength();
+  const { focus, message, isLoading: isLoadingFocus } = useFocus();
+  const { lastWeek, isLoadingLastWeek, markViewed } = useWeeklyReview();
 
   return (
     <div className="space-y-6">
@@ -26,6 +32,16 @@ export function Dashboard() {
         </div>
         <CreateHabitDialog />
       </div>
+
+      {/* Daily Focus - Full width at top */}
+      <DailyFocusCard
+        priority={focus?.priority ?? []}
+        protect={focus?.protect ?? []}
+        momentum={focus?.momentum ?? []}
+        completed={focus?.completed ?? []}
+        message={message}
+        isLoading={isLoadingFocus}
+      />
 
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {/* Daily Score */}
@@ -46,6 +62,26 @@ export function Dashboard() {
 
         {/* Achievements Summary */}
         <AchievementsSummaryCard />
+
+        {/* Habit Strength Overview */}
+        <StrengthOverviewCard
+          strengths={strengths.map((s) => ({
+            habitId: s.habitId,
+            habitName: s.habitName,
+            emoji: s.emoji,
+            strength: s.strength,
+          }))}
+          summary={summary}
+          isLoading={isLoadingStrength}
+        />
+
+        {/* Weekly Review */}
+        <WeeklyReviewCard
+          review={lastWeek ?? null}
+          isLoading={isLoadingLastWeek}
+          onMarkViewed={markViewed}
+          variant="compact"
+        />
       </div>
 
       {/* Analytics Section */}

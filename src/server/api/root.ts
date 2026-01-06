@@ -4,6 +4,10 @@ import { streakRouter } from "~/server/api/routers/streak";
 import { statsRouter } from "~/server/api/routers/stats";
 import { analyticsRouter } from "~/server/api/routers/analytics";
 import { achievementRouter } from "~/server/api/routers/achievement";
+import { strengthRouter } from "~/server/api/routers/strength";
+import { focusRouter } from "~/server/api/routers/focus";
+import { celebrationRouter } from "~/server/api/routers/celebration";
+import { reviewRouter } from "~/server/api/routers/review";
 import { createCallerFactory, createTRPCRouter } from "~/server/api/trpc";
 
 /**
@@ -18,6 +22,10 @@ export const appRouter = createTRPCRouter({
   stats: statsRouter,
   analytics: analyticsRouter,
   achievement: achievementRouter,
+  strength: strengthRouter,
+  focus: focusRouter,
+  celebration: celebrationRouter,
+  review: reviewRouter,
 });
 
 // export type definition of API
